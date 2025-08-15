@@ -345,6 +345,55 @@
             box-shadow: var(--shadow);
             margin-bottom: 30px;
             text-align: center;
+            position: relative;
+        }
+
+        .radar-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 5px;
+            z-index: 10;
+        }
+
+        .zoom-btn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+
+        .zoom-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            transform: scale(1.05);
+        }
+
+        .zoom-btn:active {
+            transform: scale(0.95);
+        }
+
+        .zoom-level {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 8px 12px;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            min-width: 60px;
+            text-align: center;
         }
 
         .radar-title {
@@ -500,6 +549,18 @@
         </div>
 
         <div class="radar-container" id="radarContainer" style="display: none;">
+            <div class="radar-controls">
+                <button class="zoom-btn" id="zoomIn" title="Zoom In">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <div class="zoom-level" id="zoomLevel">100%</div>
+                <button class="zoom-btn" id="zoomOut" title="Zoom Out">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="zoom-btn" id="zoomReset" title="Reset Zoom">
+                    <i class="fas fa-home"></i>
+                </button>
+            </div>
             <div class="radar-title">
                 <i class="fas fa-crosshairs"></i>
                 Live Radar Map
@@ -665,9 +726,37 @@
                 ctx.stroke();
             }
 
-            // Center radar at 0,0,0 (map center) instead of following local player
-            const mapCenter = { x: 0, y: 0, z: 0 };
-            const maxDistance = 4000; // Increased maximum distance for bigger map area
+            // Calculate player center for dynamic radar positioning
+            function calculatePlayerCenter(players) {
+                if (players.length === 0) return { x: 0, y: 0 };
+                
+                let sumX = 0, sumY = 0;
+                let validPlayers = 0;
+                
+                players.forEach(player => {
+                    if (player.position) {
+                        sumX += player.position.x;
+                        sumY += player.position.y;
+                        validPlayers++;
+                    }
+                });
+                
+                return validPlayers > 0 ? {
+                    x: sumX / validPlayers,
+                    y: sumY / validPlayers
+                } : { x: 0, y: 0 };
+            }
+            
+            // Update radar center based on player positions
+            const targetCenter = calculatePlayerCenter(players);
+            
+            // Smooth interpolation to new center
+            const centerLerpSpeed = 0.05;
+            radarCenter.x += (targetCenter.x - radarCenter.x) * centerLerpSpeed;
+            radarCenter.y += (targetCenter.y - radarCenter.y) * centerLerpSpeed;
+            
+            const baseMaxDistance = 4000; // Base maximum distance
+            const maxDistance = baseMaxDistance / zoomLevel; // Adjust distance based on zoom
 
             // Draw players (excluding local reference)
             players.forEach(player => {
@@ -683,9 +772,9 @@
                 const isEnemy = player.isEnemy !== undefined ? player.isEnemy : true;
                 const isFriendly = !isEnemy;
                 
-                // Calculate target position relative to map center (0,0,0)
-                const deltaX = player.position.x - mapCenter.x;
-                const deltaY = player.position.y - mapCenter.y;
+                // Calculate target position relative to dynamic radar center
+                const deltaX = player.position.x - radarCenter.x;
+                const deltaY = player.position.y - radarCenter.y;
                 
                 // Scale position to radar
                 const scale = radarRadius / maxDistance;
@@ -749,7 +838,7 @@
                 // Apply smooth rotation easing
                 if (Math.abs(rotationDiff) > 1) {
                     const rotationAmount = Math.abs(rotationDiff) / 180; // Normalize to 0-1
-                    const easedRotationSpeed = easeInOutCubic(0.25);
+                    const easedRotationSpeed = easeInOutCubic(0.25); // Faster rotation speed
                     animData.rotation += rotationDiff * easedRotationSpeed;
                 } else {
                     // Snap to target rotation if very close
@@ -893,6 +982,12 @@
         // Store player positions and rotations for smooth animation
         let playerAnimations = new Map();
         let lastUpdateTime = Date.now();
+        
+        // Zoom state
+        let zoomLevel = 1.0;
+        let minZoom = 0.25;
+        let maxZoom = 4.0;
+        let radarCenter = { x: 0, y: 0 }; // Dynamic radar center
 
         // Listen for real-time updates
         database.ref('players').on('value', (snapshot) => {
@@ -962,7 +1057,7 @@
                     const playerKey = `${player.name}_${player.index}`;
                     newPlayers.add(playerKey);
                     playersHTML += createPlayerCard(player);
-                });
+            });
 
             playersGrid.innerHTML = playersHTML;
                 
@@ -1070,6 +1165,44 @@
 
         // Add loading animation while connecting
         connectionStatus.innerHTML = '<div class="loading"></div><span>Connecting...</span>';
+        
+        // Zoom controls
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        const zoomResetBtn = document.getElementById('zoomReset');
+        const zoomLevelDisplay = document.getElementById('zoomLevel');
+        
+        function updateZoomDisplay() {
+            zoomLevelDisplay.textContent = Math.round(zoomLevel * 100) + '%';
+            
+            // Disable buttons at limits
+            zoomInBtn.style.opacity = zoomLevel >= maxZoom ? '0.5' : '1';
+            zoomOutBtn.style.opacity = zoomLevel <= minZoom ? '0.5' : '1';
+            zoomInBtn.style.cursor = zoomLevel >= maxZoom ? 'not-allowed' : 'pointer';
+            zoomOutBtn.style.cursor = zoomLevel <= minZoom ? 'not-allowed' : 'pointer';
+        }
+        
+        zoomInBtn.addEventListener('click', () => {
+            if (zoomLevel < maxZoom) {
+                zoomLevel = Math.min(maxZoom, zoomLevel * 1.5);
+                updateZoomDisplay();
+            }
+        });
+        
+        zoomOutBtn.addEventListener('click', () => {
+            if (zoomLevel > minZoom) {
+                zoomLevel = Math.max(minZoom, zoomLevel / 1.5);
+                updateZoomDisplay();
+            }
+        });
+        
+        zoomResetBtn.addEventListener('click', () => {
+            zoomLevel = 1.0;
+            updateZoomDisplay();
+        });
+        
+        // Initialize zoom display
+        updateZoomDisplay();
         
         // Continuous animation loop for smooth movement
         function animateRadar() {
