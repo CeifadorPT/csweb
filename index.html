@@ -838,7 +838,7 @@
                 // Apply smooth rotation easing
                 if (Math.abs(rotationDiff) > 1) {
                     const rotationAmount = Math.abs(rotationDiff) / 180; // Normalize to 0-1
-                    const easedRotationSpeed = easeInOutCubic(0.25); // Faster rotation speed
+                    const easedRotationSpeed = easeInOutCubic(0.75); // Faster rotation speed
                     animData.rotation += rotationDiff * easedRotationSpeed;
                 } else {
                     // Snap to target rotation if very close
