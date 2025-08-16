@@ -131,11 +131,11 @@
             box-shadow: var(--shadow);
             transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             min-height: 160px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
         }
 
         .player-card:hover {
@@ -153,6 +153,8 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 16px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .player-stats-top {
@@ -238,7 +240,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: -15px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .player-money {
@@ -276,6 +280,8 @@
             overflow: hidden;
             margin-top: 12px;
             margin-bottom: 16px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .health-bar {
@@ -283,6 +289,8 @@
             border-radius: 8px;
             transition: all 0.3s ease;
             background: var(--success-color);
+            min-width: 8px;
+            box-sizing: border-box;
         }
 
         .health-bar.low {
@@ -297,6 +305,10 @@
             display: flex;
             gap: 8px;
             margin-top: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .weapon-slot {
@@ -310,6 +322,8 @@
             justify-content: center;
             color: var(--text-secondary);
             font-size: 0.7rem;
+            flex-shrink: 0;
+            box-sizing: border-box;
         }
 
         .weapon-slot.has-weapon {
@@ -450,6 +464,81 @@
             overflow: hidden;
         }
 
+        .kill-feed {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 300px;
+        }
+
+        .kill-feed-entry {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: killFeedSlideIn 0.3s ease-out;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .kill-feed-entry .player-name {
+            color: #00FF00;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .kill-feed-entry .kill-count {
+            color: #FFD700;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .kill-feed-entry .victim-name {
+            color: #FF6B6B;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .kill-feed-entry .weapon-icon {
+            width: 24px;
+            height: 24px;
+            filter: brightness(0) invert(1);
+            opacity: 0.9;
+        }
+
+        @keyframes killFeedSlideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes killFeedSlideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }
+
         .radar-wrapper {
             position: relative;
             width: 100%;
@@ -524,6 +613,36 @@
             height: 32px;
             filter: brightness(0) invert(1); /* Make SVG icons white */
             opacity: 0.9;
+        }
+
+        .radar-player-health {
+            position: absolute;
+            bottom: 75%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8;
+            pointer-events: none;
+            width: 20px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .radar-health-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+            background: var(--success-color);
+            min-width: 2px;
+        }
+
+        .radar-health-bar.low {
+            background: var(--warning-color);
+        }
+
+        .radar-health-bar.critical {
+            background: var(--danger-color);
         }
 
         .radar-placeholder {
@@ -727,6 +846,22 @@
             .radar-title, .radar-subtitle {
                 text-align: center;
             }
+
+            .kill-feed {
+                top: 15px;
+                left: 15px;
+                max-width: 250px;
+            }
+
+            .kill-feed-entry {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+
+            .kill-feed-entry .weapon-icon {
+                width: 20px;
+                height: 20px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -802,6 +937,11 @@
             .radar-player-weapon img {
                 width: 24px;
                 height: 24px;
+            }
+
+            .radar-player-health {
+                width: 18px;
+                height: 3px;
             }
         }
 
@@ -924,10 +1064,13 @@
                     </select>
                 </div>
             </div>
-            <div class="radar-container">
+                        <div class="radar-container">
+                <div class="kill-feed" id="killFeed">
+                    <!-- Kill feed entries will be added here -->
+                </div>
                 <div class="radar-wrapper" id="radarWrapper">
                     <img id="radarImage" src="images/data/de_dust2/radar.png" alt="Map Radar">
-            </div>
+                </div>
             </div>
         </div>
 
@@ -1256,10 +1399,6 @@
                         </div>
                     </div>
                     
-                    <div class="health-bar-container">
-                        <div class="health-bar ${healthClass}" style="width: ${health}%;"></div>
-                    </div>
-                    
                     <div class="weapons-row">
                         <div class="weapon-slot" title="Equipment"></div>
                         <div class="weapon-slot ${player.armor > 0 ? 'armor' : ''}" title="Armor: ${player.armor}">
@@ -1275,6 +1414,108 @@
                     </div>
                 </div>
             `;
+        }
+
+        // Kill feed management
+        let killFeedEntries = [];
+        const maxKillFeedEntries = 5;
+        let previousPlayerData = {}; // Track previous player data to detect changes
+
+        function addKillFeedEntry(killerName, weaponName, victimName = null) {
+            const killFeed = document.getElementById('killFeed');
+            if (!killFeed) return;
+
+            // Create kill feed entry
+            const entry = document.createElement('div');
+            entry.className = 'kill-feed-entry';
+            
+            const weaponIcon = getWeaponIcon(weaponName);
+            
+            if (victimName) {
+                // Show attacker weapon victim
+                entry.innerHTML = `
+                    <span class="player-name">${killerName}</span>
+                    <div class="weapon-icon">${weaponIcon}</div>
+                    <span class="victim-name">${victimName}</span>
+                `;
+            } else {
+                // Show attacker weapon +1
+                entry.innerHTML = `
+                    <span class="player-name">${killerName}</span>
+                    <div class="weapon-icon">${weaponIcon}</div>
+                    <span class="kill-count">+1</span>
+                `;
+            }
+
+            // Add to kill feed
+            killFeed.appendChild(entry);
+            killFeedEntries.push(entry);
+
+            // Remove old entries if we exceed the limit
+            if (killFeedEntries.length > maxKillFeedEntries) {
+                const oldEntry = killFeedEntries.shift();
+                if (oldEntry && oldEntry.parentNode) {
+                    oldEntry.parentNode.removeChild(oldEntry);
+                }
+            }
+
+            // Auto-remove entry after 5 seconds
+            setTimeout(() => {
+                if (entry.parentNode) {
+                    entry.style.animation = 'killFeedSlideOut 0.3s ease-in forwards';
+                    setTimeout(() => {
+                        if (entry.parentNode) {
+                            entry.parentNode.removeChild(entry);
+                            killFeedEntries = killFeedEntries.filter(e => e !== entry);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        function updateKillFeed(players) {
+            // Check for kill count changes by comparing with previous data
+            players.forEach(player => {
+                const previousData = previousPlayerData[player.name];
+                
+                if (previousData) {
+                    // Check if player got a kill
+                    if (player.kills > previousData.kills) {
+                        // Player got a kill! Find their current weapon
+                        const currentWeapon = player.weapons?.active || 'unknown';
+                        
+                        // Try to find who died (player whose health dropped to 0)
+                        let victimName = null;
+                        players.forEach(otherPlayer => {
+                            if (otherPlayer.name !== player.name) {
+                                const otherPreviousData = previousPlayerData[otherPlayer.name];
+                                if (otherPreviousData && otherPreviousData.health > 0 && otherPlayer.health === 0) {
+                                    victimName = otherPlayer.name;
+                                }
+                            }
+                        });
+                        
+                        // Add kill feed entry
+                        addKillFeedEntry(player.name, currentWeapon, victimName);
+                        
+                        console.log(`Kill detected: ${player.name} killed ${victimName || 'someone'} with ${currentWeapon}`);
+                    }
+                    
+                    // Check if player died (health dropped to 0)
+                    if (previousData.health > 0 && player.health === 0) {
+                        console.log(`Player died: ${player.name}`);
+                    }
+                }
+            });
+            
+            // Update previous data for next comparison
+            players.forEach(player => {
+                previousPlayerData[player.name] = {
+                    kills: player.kills || 0,
+                    health: player.health || 0,
+                    weapons: player.weapons || {}
+                };
+            });
         }
 
         function updateTeamLists(players) {
@@ -1324,6 +1565,9 @@
             
             // Update team lists
             updateTeamLists(players);
+            
+            // Update kill feed
+            updateKillFeed(players);
             
             // Draw radar
             drawRadar(players);
@@ -1577,6 +1821,14 @@
                     }
                     playerDot.appendChild(playerWeapon);
                     
+                    // Create health bar (stays fixed, doesn't rotate)
+                    const playerHealthBar = document.createElement('div');
+                    playerHealthBar.className = 'radar-player-health';
+                    const healthPercent = Math.max(playerData.player.health || 0, 1);
+                    const healthClass = getHealthClass(playerData.player.health || 0);
+                    playerHealthBar.innerHTML = `<div class="radar-health-bar ${healthClass}" style="width: ${healthPercent}%;"></div>`;
+                    playerDot.appendChild(playerHealthBar);
+                    
                     // Create the actual teardrop (this will rotate)
                     const playerTeardrop = document.createElement('div');
                     playerTeardrop.className = `radar-player-teardrop ${playerData.isEnemy ? 'enemy' : 'teammate'}`;
@@ -1666,6 +1918,14 @@
                     playerWeapon.innerHTML = getWeaponIcon(playerData.player.weapons.active);
                 } else if (playerWeapon) {
                     playerWeapon.innerHTML = '';
+                }
+
+                // Update health bar for existing players
+                const playerHealthBar = playerDot.querySelector('.radar-player-health');
+                if (playerHealthBar) {
+                    const healthPercent = Math.max(playerData.player.health || 0, 1);
+                    const healthClass = getHealthClass(playerData.player.health || 0);
+                    playerHealthBar.innerHTML = `<div class="radar-health-bar ${healthClass}" style="width: ${healthPercent}%;"></div>`;
                 }
             });
             
